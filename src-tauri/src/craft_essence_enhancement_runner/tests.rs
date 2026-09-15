@@ -10,6 +10,8 @@ fn ce_cell(
     fingerprint: &str,
 ) -> CraftEssenceGridCell {
     CraftEssenceGridCell {
+        selected: false,
+        selection_index: None,
         row: 0,
         col: 0,
         region: NormRect {

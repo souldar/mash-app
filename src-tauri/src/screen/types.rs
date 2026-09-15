@@ -299,6 +299,10 @@ pub struct FindItemGridResult {
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CraftEssenceGridCell {
+    #[serde(default)]
+    pub selected: bool,
+    #[serde(default)]
+    pub selection_index: Option<u8>,
     pub row: u32,
     pub col: u32,
     pub region: NormRect,
@@ -809,4 +813,17 @@ impl FromStr for Screen {
         };
         Ok(screen)
     }
+}
+
+#[derive(Debug, Clone, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BurnServantCandidate {
+    pub region: NormRect,
+    pub rarity_max: u8,
+    pub servant_label_score: f64,
+    pub lock_score: f64,
+}
+#[derive(Debug, serde::Deserialize)]
+pub struct ReadBurnServantsResult {
+    pub candidates: Vec<BurnServantCandidate>,
 }

@@ -597,6 +597,17 @@
               "threshold": 0.85,
               "templateReferenceWidth": 1920
             },
+            "dialog_friend_point_ce_inventory_full": {
+              "template": "summon_friends_point/dialog_friend_point_ce_inventory_full",
+              "region": {
+                "x": 0.255,
+                "y": 0.19,
+                "w": 0.48,
+                "h": 0.09
+              },
+              "threshold": 0.9,
+              "templateReferenceWidth": 1920
+            },
             "dialog_grand_summon_friends_point_confirmation": {
               "template": "summon_friends_point/dialog_grand_summon_friends_point_confirmation",
               "region": {
@@ -633,44 +644,90 @@
           "elements": {
             "dialog_enhancement_ce_recommend_material": {
               "template": "enhancement_ce/dialog_enhancement_ce_recommend_material",
-              "region": { "x": 0.4, "y": 0.04, "w": 0.2, "h": 0.08 },
+              "region": {
+                "x": 0.4,
+                "y": 0.04,
+                "w": 0.2,
+                "h": 0.08
+              },
               "threshold": 0.85,
               "templateReferenceWidth": 1920
             },
             "dialog_enhancement_ce_recommend_empty": {
               "template": "enhancement_ce/dialog_enhancement_ce_recommend_empty",
-              "region": { "x": 0.25, "y": 0.3, "w": 0.5, "h": 0.2 },
+              "region": {
+                "x": 0.25,
+                "y": 0.3,
+                "w": 0.5,
+                "h": 0.2
+              },
               "threshold": 0.8,
               "templateReferenceWidth": 1920
             },
             "dialog_enhancement_ce_confirm": {
               "template": "enhancement_ce/dialog_enhancement_ce_confirm",
-              "region": { "x": 0.3, "y": 0.62, "w": 0.45, "h": 0.22 },
+              "region": {
+                "x": 0.3,
+                "y": 0.62,
+                "w": 0.45,
+                "h": 0.22
+              },
               "threshold": 0.88,
               "templateReferenceWidth": 1920
             },
             "dialog_enhancement_ce_confirm_compact": {
               "template": "enhancement_ce/dialog_enhancement_ce_confirm_compact",
-              "region": { "x": 0.3, "y": 0.62, "w": 0.45, "h": 0.22 },
+              "region": {
+                "x": 0.3,
+                "y": 0.62,
+                "w": 0.45,
+                "h": 0.22
+              },
               "threshold": 0.88,
               "templateReferenceWidth": 1920
             },
             "dialog_enhancement_ce_enhanced_material_warning": {
               "template": "enhancement_ce/dialog_enhancement_ce_enhanced_material_warning",
-              "region": { "x": 0.3, "y": 0.02, "w": 0.4, "h": 0.11 },
+              "region": {
+                "x": 0.3,
+                "y": 0.02,
+                "w": 0.4,
+                "h": 0.11
+              },
               "threshold": 0.82,
               "templateReferenceWidth": 1920
             },
             "text_exp_overflow": {
               "template": "enhancement_ce/text_exp_overflow",
-              "region": { "x": 0.627, "y": 0.133, "w": 0.088, "h": 0.086 },
+              "region": {
+                "x": 0.627,
+                "y": 0.133,
+                "w": 0.088,
+                "h": 0.086
+              },
               "threshold": 0.85,
               "templateReferenceWidth": 1920
             },
             "element_enhancement_ce_success": {
               "template": "enhancement_ce/element_enhancement_ce_success",
-              "region": { "x": 0.32, "y": 0.84, "w": 0.36, "h": 0.15 },
+              "region": {
+                "x": 0.32,
+                "y": 0.84,
+                "w": 0.36,
+                "h": 0.15
+              },
               "threshold": 0.88,
+              "templateReferenceWidth": 1920
+            },
+            "dialog_enhancement_ce_recommend_selection_confirm": {
+              "template": "enhancement_ce/dialog_ce_recommend_selection_confirm",
+              "region": {
+                "x": 0.32,
+                "y": 0.13,
+                "w": 0.36,
+                "h": 0.11
+              },
+              "threshold": 0.9,
               "templateReferenceWidth": 1920
             }
           }
@@ -679,43 +736,78 @@
           "elements": {
             "button_enhancement_ce_lock_mode_active": {
               "template": "enhancement_ce/button_enhancement_ce_lock_mode_active",
-              "region": { "x": 0, "y": 0.452, "w": 0.05, "h": 0.153 },
+              "region": {
+                "x": 0,
+                "y": 0.452,
+                "w": 0.05,
+                "h": 0.153
+              },
               "threshold": 0.9,
               "templateReferenceWidth": 1920
             },
             "button_scale_level_3": {
               "template": "enhancement_ce/button_scale_level_3",
-              "region": { "x": 0, "y": 0.89, "w": 0.061, "h": 0.104 },
+              "region": {
+                "x": 0,
+                "y": 0.89,
+                "w": 0.061,
+                "h": 0.104
+              },
               "threshold": 0.8,
               "templateReferenceWidth": 2560
             },
             "dialog_enhancement_ce_filter": {
               "template": "enhancement_ce/dialog_enhancement_ce_filter",
-              "region": { "x": 0.38, "y": 0.02, "w": 0.25, "h": 0.14 },
+              "region": {
+                "x": 0.38,
+                "y": 0.02,
+                "w": 0.25,
+                "h": 0.14
+              },
               "threshold": 0.8,
               "templateReferenceWidth": 1920
             },
             "button_enhancement_ce_filter_init": {
               "template": "enhancement_ce/button_enhancement_ce_filter_init",
-              "region": { "x": 0.1, "y": 0.8, "w": 0.17, "h": 0.15 },
+              "region": {
+                "x": 0.1,
+                "y": 0.8,
+                "w": 0.17,
+                "h": 0.15
+              },
               "threshold": 0.8,
               "templateReferenceWidth": 1920
             },
             "dialog_enhancement_ce_order": {
               "template": "enhancement_ce/dialog_enhancement_ce_order",
-              "region": { "x": 0.42, "y": 0.08, "w": 0.17, "h": 0.13 },
+              "region": {
+                "x": 0.42,
+                "y": 0.08,
+                "w": 0.17,
+                "h": 0.13
+              },
               "threshold": 0.8,
               "templateReferenceWidth": 1920
             },
             "toggle_enhancement_ce_intelligent_order_off": {
               "template": "enhancement_ce/toggle_enhancement_ce_intelligent_order_off",
-              "region": { "x": 0.4, "y": 0.58, "w": 0.1, "h": 0.15 },
+              "region": {
+                "x": 0.4,
+                "y": 0.58,
+                "w": 0.1,
+                "h": 0.15
+              },
               "threshold": 0.8,
               "templateReferenceWidth": 1920
             },
             "toggle_enhancement_ce_intelligent_order_on": {
               "template": "enhancement_ce/toggle_enhancement_ce_intelligent_order_on",
-              "region": { "x": 0.4, "y": 0.58, "w": 0.1, "h": 0.15 },
+              "region": {
+                "x": 0.4,
+                "y": 0.58,
+                "w": 0.1,
+                "h": 0.15
+              },
               "threshold": 0.8,
               "templateReferenceWidth": 1920
             }
@@ -790,6 +882,124 @@
                 "h": 0.104
               },
               "threshold": 0.8
+            }
+          }
+        }
+      }
+    },
+    "InventoryMaintenance": {
+      "variants": {
+        "main": {
+          "elements": {
+            "burn_title": {
+              "template": "inventory_maintenance/burn_title",
+              "region": {
+                "x": 0.78,
+                "y": 0,
+                "w": 0.22,
+                "h": 0.13
+              },
+              "threshold": 0.92,
+              "templateReferenceWidth": 1920
+            },
+            "servant_tab": {
+              "template": "inventory_maintenance/servant_tab",
+              "region": {
+                "x": 0.01,
+                "y": 0.12,
+                "w": 0.15,
+                "h": 0.08
+              },
+              "threshold": 0.92,
+              "templateReferenceWidth": 1920
+            },
+            "select_mode": {
+              "template": "inventory_maintenance/select_mode",
+              "region": {
+                "x": 0,
+                "y": 0.3,
+                "w": 0.055,
+                "h": 0.13
+              },
+              "threshold": 0.92,
+              "templateReferenceWidth": 1920
+            },
+            "burn_confirm": {
+              "template": "inventory_maintenance/burn_confirm",
+              "region": {
+                "x": 0.37,
+                "y": 0.58,
+                "w": 0.27,
+                "h": 0.12
+              },
+              "threshold": 0.92,
+              "templateReferenceWidth": 1920
+            },
+            "shop_title": {
+              "template": "inventory_maintenance/shop_title",
+              "region": {
+                "x": 0.72,
+                "y": 0,
+                "w": 0.28,
+                "h": 0.13
+              },
+              "threshold": 0.92,
+              "templateReferenceWidth": 1920
+            },
+            "global_menu": {
+              "template": "inventory_maintenance/global_menu",
+              "region": {
+                "x": 0.43,
+                "y": 0.85,
+                "w": 0.14,
+                "h": 0.1
+              },
+              "threshold": 0.92,
+              "templateReferenceWidth": 1920
+            },
+            "ce_entry": {
+              "template": "inventory_maintenance/ce_entry",
+              "region": {
+                "x": 0.63,
+                "y": 0.53,
+                "w": 0.3,
+                "h": 0.23
+              },
+              "threshold": 0.92,
+              "templateReferenceWidth": 1920
+            },
+            "enhancement_title": {
+              "template": "inventory_maintenance/enhancement_title",
+              "region": {
+                "x": 0.89,
+                "y": 0,
+                "w": 0.11,
+                "h": 0.13
+              },
+              "threshold": 0.92,
+              "templateReferenceWidth": 1920
+            },
+            "burn_filter": {
+              "template": "inventory_maintenance/burn_filter",
+              "region": {
+                "x": 0.4,
+                "y": 0.03,
+                "w": 0.2,
+                "h": 0.1
+              },
+              "threshold": 0.92,
+              "templateReferenceWidth": 1920
+            },
+            "burn_filter_kind": {
+              "template": "inventory_maintenance/burn_filter_kind",
+              "region": {
+                "x": 0.1,
+                "y": 0.14,
+                "w": 0.8,
+                "h": 0.65
+              },
+              "threshold": 0.92,
+              "templateReferenceWidth": 1920
             }
           }
         }

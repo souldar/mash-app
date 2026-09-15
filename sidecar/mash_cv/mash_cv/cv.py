@@ -1173,7 +1173,7 @@ def _parse_ce_level_text(text: str) -> Optional[tuple[int, int]]:
 
 def _parse_ce_main_level_text(text: str) -> Optional[tuple[int, int]]:
     parsed = _parse_ce_level_text(text)
-    if parsed is not None and parsed[1] in CE_MAIN_TARGET_LEVEL_CAPS:
+    if parsed is not None:
         return parsed
 
     raw_text = str(text)
@@ -1503,6 +1503,58 @@ def _ce_scrollbar_thumb_y(img: np.ndarray) -> Optional[float]:
     return _ce_scrollbar_thumb_geometry(img)[0]
 
 
+def _ce_selection_marker(img: np.ndarray, region: dict) -> tuple[bool, Optional[int]]:
+    """Read the green lower-left selection badge; unreadable badges stay selected.
+
+    Never infer an unselected card merely because its sequence OCR failed.
+    Coordinates are relative to the card, so the probe scales with the frame.
+    """
+    badge = _clamp_norm_rect({
+        "x": region["x"], "y": region["y"] + region["h"] * 0.79,
+        "w": region["w"] * 0.24, "h": region["h"] * 0.21,
+    })
+    h, w = img.shape[:2]
+    x, y = round(badge["x"] * w), round(badge["y"] * h)
+    crop = img[y:round((badge["y"] + badge["h"]) * h),
+               x:round((badge["x"] + badge["w"]) * w)]
+    if crop.size == 0:
+        return False, None
+    hsv = cv2.cvtColor(crop, cv2.COLOR_BGR2HSV)
+    green = ((hsv[:, :, 0] >= 55) & (hsv[:, :, 0] <= 90)
+             & (hsv[:, :, 1] >= 80) & (hsv[:, :, 2] >= 170))
+    if float(np.mean(green)) < 0.35:
+        return False, None
+    white = ((hsv[:, :, 1] < 65) & (hsv[:, :, 2] > 120)).astype(np.uint8)
+    _, labels, stats, _ = cv2.connectedComponentsWithStats(white, 8)
+    white[:] = 0
+    for index, stat in enumerate(stats[1:], 1):
+        if stat[3] >= h / 1080 * 9 and stat[4] >= max(4, w / 1920 * 8):
+            white[labels == index] = 1
+    x, y, cw, ch = cv2.boundingRect(white)
+    if cw == 0 or ch < h / 1080 * 9:
+        return True, None
+    glyph = cv2.resize(white[y:y + ch, x:x + cw].astype(np.float32),
+                       (60, 28), interpolation=cv2.INTER_AREA)
+    scores = []
+    for index in range(1, 21):
+        template = _get_template(f"shared/enhancement_ce/selection_number_{index}")
+        if template is None:
+            return True, None
+        th, tw = template.shape[:2]
+        if abs(tw / th - cw / ch) > 0.25:
+            continue
+        reference = cv2.resize(template.astype(np.float32) / 255,
+                               (60, 28), interpolation=cv2.INTER_AREA)
+        score = float(np.minimum(glyph, reference).sum() / max(1, np.maximum(glyph, reference).sum()))
+        scores.append((score, index))
+    scores.sort(reverse=True)
+    if not scores or scores[0][0] < 0.62:
+        return True, None
+    if len(scores) > 1 and scores[0][0] - scores[1][0] < 0.04:
+        return True, None
+    return True, scores[0][1]
+
+
 def _read_craft_essence_grid(img: np.ndarray, cmd: dict) -> dict:
     """Read safety-critical metadata for each visible CE inventory cell."""
 
@@ -1515,6 +1567,34 @@ def _read_craft_essence_grid(img: np.ndarray, cmd: dict) -> dict:
         if _ce_cell_has_anchor(cell, anchors)
         and _ce_cell_fully_visible(cell, list_region)
     ]
+    # Selection replaces the bronze anchor with a green border. Recover only
+    # complete seven-column card outlines, never extrapolate occupied slots.
+    h, w = img.shape[:2]
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    mask = (((hsv[:, :, 0] >= 55) & (hsv[:, :, 0] <= 90)
+             & (hsv[:, :, 1] >= 80) & (hsv[:, :, 2] >= 170)).astype(np.uint8))
+    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    recovered_selection = False
+    for contour in contours:
+        x, y, cw, ch = cv2.boundingRect(contour)
+        if not (abs(cw / w - ITEM_GRID_CARD_W) < 0.006
+                and abs(ch / h - ITEM_GRID_CARD_H) < 0.012):
+            continue
+        region = _norm_rect_from_px(x, y, cw, ch, w, h)
+        cell = {"region": region, "row": round(y / h / ITEM_GRID_ROW_PITCH),
+                "col": round((x / w - 0.057) / ITEM_GRID_COL_PITCH)}
+        if not (0 <= cell["col"] < 7 and _ce_cell_fully_visible(cell, list_region)):
+            continue
+        if any(abs(c["region"]["x"] - x / w) < 0.01
+               and abs(c["region"]["y"] - y / h) < 0.02 for c in cells):
+            continue
+        cells.append(cell)
+        recovered_selection = True
+    cells.sort(key=lambda cell: (round(cell["region"]["y"], 2), cell["region"]["x"]))
+    if recovered_selection:
+        top = min(cell["region"]["y"] for cell in cells)
+        for cell in cells:
+            cell["row"] = round((cell["region"]["y"] - top) / ITEM_GRID_ROW_PITCH)
     lock_template = _get_template(CE_GRID_LOCK_TEMPLATE)
     grid_ocr = _ocr_region(img, list_region)
     output_cells: list[dict] = []
@@ -1593,6 +1673,7 @@ def _read_craft_essence_grid(img: np.ndarray, cmd: dict) -> dict:
         )
         if not valid:
             invalid_cells += 1
+        selected, selection_index = _ce_selection_marker(img, region)
         output_cells.append(
             {
                 "row": int(cell["row"]),
@@ -1615,6 +1696,8 @@ def _read_craft_essence_grid(img: np.ndarray, cmd: dict) -> dict:
                 "sameAsTargetText": same_target_text,
                 "sameAsTargetConfidence": same_target_confidence,
                 "valid": bool(valid),
+                "selected": selected,
+                "selectionIndex": selection_index,
             }
         )
 
@@ -1641,6 +1724,54 @@ def _read_craft_essence_grid(img: np.ndarray, cmd: dict) -> dict:
         "cells": output_cells,
         "diagnostics": diagnostics,
     }
+
+
+def _read_burn_servants(img: np.ndarray) -> dict:
+    """Only propose fully visible, unlocked bronze/silver *servant* cards.
+
+    A positive servant label excludes embers and Fou cards; border saturation
+    separates gold cards even when their grayscale label has the same shape.
+    """
+    anchors = []
+    for key in ("inventory_maintenance/bar_servant", "inventory_maintenance/bar_servant_silver"):
+        if _get_template(key) is None:
+            return {"candidates": [], "error": "missing servant label template"}
+        matches, error = _detect_item_grid_anchors(
+            img, key, ITEM_GRID_DEFAULT_REGION, 0.95, 0.94, 1920)
+        if error:
+            return {"candidates": [], "error": error}
+        anchors.extend(matches)
+    anchors = _nms_candidates(anchors, 0.04, 0.02)
+    lock_template = _get_template(CE_GRID_LOCK_TEMPLATE)
+    h, w = img.shape[:2]
+    candidates = []
+    for anchor in anchors:
+        region = {"x": anchor["x"] - ITEM_GRID_ANCHOR_OFFSET_X,
+                  "y": anchor["y"] - ITEM_GRID_ANCHOR_OFFSET_Y,
+                  "w": ITEM_GRID_CARD_W, "h": ITEM_GRID_CARD_H}
+        if not _ce_cell_fully_visible({"region": region}, ITEM_GRID_DEFAULT_REGION):
+            continue
+        x, y = round(anchor["x"] * w), round(anchor["y"] * h)
+        bar = img[y:y + max(1, round(anchor["h"] * h)),
+                  x:x + max(1, round(anchor["w"] * w))]
+        saturation = float(np.median(cv2.cvtColor(bar, cv2.COLOR_BGR2HSV)[:, :, 1]))
+        # Silver has almost no saturation; bronze is muted. Gold cards must
+        # never be accepted on grayscale-template similarity alone.
+        if saturation >= 130 or lock_template is None:
+            continue
+        lock = _score_template_region(img, lock_template, _ce_cell_lock_region(region),
+                                      CE_GRID_LOCK_THRESHOLD,
+                                      template_key=CE_GRID_LOCK_TEMPLATE,
+                                      template_reference_width=1920)
+        if float(lock.get("score", 1)) > CE_GRID_UNLOCKED_MAX_SCORE:
+            continue
+        selected, _ = _ce_selection_marker(img, region)
+        if selected:
+            continue
+        candidates.append({"region": region, "rarityMax": 3 if saturation < 40 else 2,
+                           "servantLabelScore": anchor["score"],
+                           "lockScore": float(lock["score"])})
+    return {"candidates": candidates, "error": None}
 
 
 def _find_enhancement_servant_grid(img: np.ndarray, cmd: dict) -> dict:
@@ -6792,6 +6923,9 @@ def _main_repl() -> None:
                     _reply(req_id, last_result)
                     break
                 time.sleep(max(0.02, interval))
+        elif action == "read_burn_servants":
+            img, err = _load_frame(cmd)
+            _reply(req_id, {"error": err} if img is None else _read_burn_servants(img))
         elif action == "read_craft_essence_main_target":
             img, err = _load_frame(cmd)
             if img is None:

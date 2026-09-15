@@ -121,6 +121,7 @@ const RECOMMEND_FILTERS: [RecommendFilter; 7] = [
 pub(crate) enum CraftEssenceEnhancementMode {
     QpEfficient,
     Fast,
+    Cycle,
 }
 
 impl Default for CraftEssenceEnhancementMode {
@@ -223,6 +224,9 @@ pub(crate) enum Screen {
     Unknown,
 }
 
+mod cycle;
+mod cycle_policy;
+pub(crate) use cycle_policy::CycleBaseRarity;
 mod device;
 mod dialogs;
 mod enhancement_flow;
@@ -319,7 +323,9 @@ impl RecommendFilter {
     fn target_on(self, profile: RecommendMaterialProfile) -> bool {
         self.rarity
             .is_some_and(|filter_rarity| profile.includes_rarity(filter_rarity))
-            || (self.rarity.is_none() && self.fixed_target_on)
+            || (self.rarity.is_none()
+                && (self.fixed_target_on
+                    || (self.label == "已强化" && profile == RecommendMaterialProfile::Cycle)))
     }
 
     fn center(self) -> Point {
@@ -395,6 +401,7 @@ pub struct CraftEssenceEnhancementRunner {
     lock_candidate_col: Option<u32>,
     lock_candidate_point: Option<Point>,
     mode: CraftEssenceEnhancementMode,
+    cycle_base_rarity: CycleBaseRarity,
 }
 
 impl CraftEssenceEnhancementRunner {
@@ -475,10 +482,20 @@ impl CraftEssenceEnhancementRunner {
             lock_candidate_col: None,
             lock_candidate_point: None,
             mode,
+            cycle_base_rarity: CycleBaseRarity::default(),
         }
     }
 
+    pub(crate) fn with_cycle_base_rarity(mut self, rarity: CycleBaseRarity) -> Self {
+        self.cycle_base_rarity = rarity;
+        self
+    }
+
     pub fn run(mut self) {
+        if self.mode == CraftEssenceEnhancementMode::Cycle {
+            self.run_cycle(self.cycle_base_rarity);
+            return;
+        }
         self.transition(LifecycleEvent::WorkerStarted);
         self.emit(
             "",

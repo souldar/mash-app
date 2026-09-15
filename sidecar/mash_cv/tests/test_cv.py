@@ -6332,8 +6332,8 @@ def test_parse_ce_level_text_is_limited_to_known_strategy_caps(text, expected):
         ("100/100", (100, 100)),
         ("10/2 120", (10, 20)),
         ("等级10/2\n120", (10, 20)),
-        ("等级1/15", None),
-        ("32/55", None),
+        ("等级1/15", (1, 15)),
+        ("32/55", (32, 55)),
         ("32155", None),
         ("999/100", None),
         ("10/3 120", None),
@@ -6724,3 +6724,106 @@ def test_read_craft_essence_grid_drops_clipped_rows_during_scroll(fixture):
         and not cell["locked"]
         for cell in result["cells"]
     )
+
+
+@pytest.mark.parametrize("size", [(1920, 1080), (1280, 720)])
+@pytest.mark.parametrize("variant", ["original", "changed_count", "missing_title", "home"])
+def test_friend_point_ce_inventory_full_ignores_count_and_rejects_other_pages(size, variant):
+    resources = Path(__file__).resolve().parents[3] / "src-tauri/resources/servers/cn"
+    fixtures = Path(__file__).with_name("test_data") / "screenshots/friend_point_summon"
+    mash_cv._load_templates(str(resources / "templates"))
+    assert mash_cv._load_config(str(resources / "cv.json"))["ok"]
+    frame = cv2.imread(str(fixtures / ("home_limited.png" if variant == "home" else "ce_inventory_full.png")))
+    if variant == "changed_count":
+        frame[548:610, 820:1100] = 100
+    elif variant == "missing_title":
+        frame[215:285, 510:1385] = 100
+    result = mash_cv._find_element_by_name(
+        cv2.resize(frame, size, interpolation=cv2.INTER_AREA),
+        "FriendPointSummon", "dialog_friend_point_ce_inventory_full",
+    )
+    assert result["found"] == (variant in {"original", "changed_count"}), result
+
+
+@pytest.mark.parametrize("width", [1920, 1280])
+def test_ce_selected_cards_survive_green_anchor_overlay(width):
+    _load_craft_essence_enhancement_assets()
+    img = _ce_enhancement_fixture("cycle_material_selected.png")
+    img = cv2.resize(img, (width, round(width * 9 / 16)))
+    result = mash_cv._read_craft_essence_grid(img, {
+        "anchorTemplateKey": "enhancement_ce/item_ce_bar_bronze",
+        "anchorTemplateReferenceWidth": 1920,
+        "region": {"x": .055, "y": .251, "w": .755, "h": .747},
+    })
+    assert result["found"]
+    selected = [cell for cell in result["cells"] if cell["selected"]]
+    assert len(selected) == 12
+    indices = [cell["selectionIndex"] for cell in selected]
+    if width == 1920:
+        assert indices == list(range(8, 20))
+    else:
+        # Sub-minimum streaming resolution: ambiguity must never become a
+        # different sequence number or an unselected card.
+        assert all(actual is None or actual == expected
+                   for actual, expected in zip(indices, range(8, 20)))
+    assert all(cell["level"] == 1 and cell["rarity"] == 2 for cell in selected)
+    assert all(cell["selectionIndex"] is None for cell in result["cells"] if not cell["selected"])
+
+
+@pytest.mark.parametrize("text,expected", [("1/15", (1, 15)), ("26/55", (26, 55)), ("50/55", (50, 55)), ("53/55", (53, 55)), ("1/99", None)])
+def test_ce_main_accepts_two_star_explicit_level_caps(text, expected):
+    assert mash_cv.cv._parse_ce_main_level_text(text) == expected
+
+
+@pytest.mark.parametrize("width", [1920, 2560])
+def test_burn_candidates_exclude_embers_and_gold_servants(width):
+    _load_craft_essence_enhancement_assets()
+    img = cv2.imread(str(Path(_TEST_SCREENSHOTS_DIR) / "inventory_maintenance/burn_list.png"))
+    img = cv2.resize(img, (width, round(width * 9 / 16)))
+    result = mash_cv.cv._read_burn_servants(img)
+    assert result["error"] is None
+    assert len(result["candidates"]) == 12
+    assert sum(c["rarityMax"] == 3 for c in result["candidates"]) == 1
+    # Top row contains gold servants and embers; second row starts with embers.
+    assert all(c["region"]["y"] > .44 for c in result["candidates"])
+    assert all(c["region"]["x"] > .26 for c in result["candidates"] if c["region"]["y"] < .5)
+
+
+@pytest.mark.parametrize("score", [.51, .7, .95])
+def test_burn_rejects_locked_or_ambiguous_lock_state(monkeypatch, score):
+    _load_craft_essence_enhancement_assets()
+    img = cv2.imread(str(Path(_TEST_SCREENSHOTS_DIR) / "inventory_maintenance/burn_list.png"))
+    monkeypatch.setattr(mash_cv.cv, "_score_template_region", lambda *a, **kw: {"score": score})
+    assert mash_cv.cv._read_burn_servants(img)["candidates"] == []
+
+
+@pytest.mark.parametrize("width", [1920, 1280])
+def test_cycle_recommendation_confirmation_is_separate_from_enhance_confirmation(width):
+    _load_craft_essence_enhancement_assets()
+    img = _ce_enhancement_fixture("cycle_recommend_confirm.png")
+    img = cv2.resize(img, (width, round(width * 9 / 16)))
+    assert mash_cv._find_element_by_name(img, "CraftEssenceEnhancement", "dialog_enhancement_ce_recommend_selection_confirm")["found"]
+    ordinary = _ce_enhancement_fixture("cycle_auto_selected.png")
+    assert not mash_cv._find_element_by_name(ordinary, "CraftEssenceEnhancement", "dialog_enhancement_ce_recommend_selection_confirm")["found"]
+
+
+@pytest.mark.parametrize("width", [1920, 1280])
+@pytest.mark.parametrize("offset", [0, 100])
+@pytest.mark.parametrize("state", ["off", "on"])
+def test_burn_kind_filter_tracks_scrolling_and_servant_only_selection(width, offset, state):
+    _load_craft_essence_enhancement_assets()
+    img = cv2.imread(str(Path(_TEST_SCREENSHOTS_DIR) / f"inventory_maintenance/filter_kind_{state}.png"))
+    if offset:
+        # Move the scrollable content while keeping the dialog chrome fixed.
+        img[150:780, 200:1670] = img[250:880, 200:1670].copy()
+    img = cv2.resize(img, (width, round(width * 9 / 16)), interpolation=cv2.INTER_AREA)
+    assert mash_cv._find_element_by_name(img, "InventoryMaintenance", "burn_filter")["found"]
+    label = mash_cv._find_element_by_name(img, "InventoryMaintenance", "burn_filter_kind")
+    assert label["found"], label
+    for index in range(3):
+        sample = {"x": .275 + index * .166, "y": label["y"] + .065, "w": .025, "h": .032}
+        luma = mash_cv.cv._read_region_luma(img, sample)["meanLuma"]
+        if state == "on" and index == 0:
+            assert luma >= 180, (index, luma)
+        else:
+            assert luma <= 145, (index, luma)

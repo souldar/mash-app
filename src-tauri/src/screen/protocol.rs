@@ -27,6 +27,7 @@ pub(super) enum SidecarCommand {
     ReadBattleScene,
     ReadBondLevelUp,
     ReadCraftEssenceGrid,
+    ReadBurnServants,
     ReadCraftEssenceMainTarget,
     ReadLevelDigits,
     ReadRegionLuma,

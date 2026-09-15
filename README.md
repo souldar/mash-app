@@ -74,6 +74,8 @@ See [docs/module-structure.md](docs/module-structure.md) for module ownership an
 
 ## Development
 
+In-progress friend-point inventory maintenance work: [cross-machine handoff and remaining tasks](docs/development/friend-point-inventory-maintenance-handoff.md).
+
 ```bash
 # Install frontend dependencies
 pnpm install

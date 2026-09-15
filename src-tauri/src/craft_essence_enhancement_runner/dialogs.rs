@@ -284,15 +284,19 @@ impl CraftEssenceEnhancementRunner {
             }
         };
         match classify_auto_config_saturation(auto_color.mean_saturation) {
-            AutoConfigState::Off => {
-                self.emit("RecommendMaterialDialog", "开启自动配置");
+            state
+                if matches!(state, AutoConfigState::Off | AutoConfigState::On)
+                    && (state == AutoConfigState::On)
+                        == (self.recommend_profile == RecommendMaterialProfile::Cycle) =>
+            {
+                self.emit("RecommendMaterialDialog", "调整自动配置开关");
                 if self.tap_at("RecommendMaterialDialog", RECOMMEND_AUTO_CONFIG_BUTTON) {
                     thread::sleep(Duration::from_millis(500));
                     return true;
                 }
                 false
             }
-            AutoConfigState::On => {
+            AutoConfigState::Off | AutoConfigState::On => {
                 self.emit(
                     "RecommendMaterialDialog",
                     &format!("执行推荐素材选择：{}", self.recommend_profile.label()),

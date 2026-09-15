@@ -7,6 +7,15 @@ import { renderWithTheme } from "../../../test/renderWithTheme";
 import { CraftEssenceEnhancementPage } from "../CraftEssenceEnhancementPage";
 
 describe("CraftEssenceEnhancementPage", () => {
+  it("submits the cycle strategy with its base rarity", async () => {
+    const user = userEvent.setup();
+    renderWithTheme(<CraftEssenceEnhancementPage onBack={() => {}} />);
+    await user.click(screen.getByRole("button", { name: "制作丸子（循环策略）" }));
+    expect(invoke).toHaveBeenCalledWith("start_craft_essence_enhancement_automation", {
+      mode: "cycle", baseRarity: "both",
+    });
+  });
+
   it("starts and stops the independent automation commands", async () => {
     const user = userEvent.setup();
     renderWithTheme(<CraftEssenceEnhancementPage onBack={() => {}} />);

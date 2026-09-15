@@ -3,6 +3,15 @@
 use super::*;
 
 impl SidecarClient {
+    pub fn read_burn_servants(&mut self) -> Result<ReadBurnServantsResult, String> {
+        let req = request(SidecarCommand::ReadBurnServants, serde_json::json!({}))?;
+        let response = self.send_recv(&req)?;
+        if let Some(error) = response.get("error").and_then(|v| v.as_str()) {
+            return Err(error.into());
+        }
+        serde_json::from_value(response).map_err(|e| format!("invalid burn servant response: {e}"))
+    }
+
     pub fn find_enhancement_servant_grid(
         &mut self,
         image_path: Option<&Path>,

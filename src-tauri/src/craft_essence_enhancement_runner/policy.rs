@@ -39,6 +39,7 @@ pub(super) enum RecommendMaterialProfile {
     TwoStarOnly,
     OneStarOnly,
     OneAndTwoStar,
+    Cycle,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -52,7 +53,7 @@ impl RecommendMaterialProfile {
         match self {
             Self::TwoStarOnly => rarity == 2,
             Self::OneStarOnly => rarity == 1,
-            Self::OneAndTwoStar => matches!(rarity, 1 | 2),
+            Self::OneAndTwoStar | Self::Cycle => matches!(rarity, 1 | 2),
         }
     }
 
@@ -61,6 +62,7 @@ impl RecommendMaterialProfile {
             Self::TwoStarOnly => "仅 2 星未强化礼装",
             Self::OneStarOnly => "仅 1 星未强化礼装",
             Self::OneAndTwoStar => "1 星、2 星未强化礼装",
+            Self::Cycle => "1 星、2 星未强化及已强化礼装",
         }
     }
 }

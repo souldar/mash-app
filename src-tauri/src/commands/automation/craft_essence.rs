@@ -61,6 +61,7 @@ pub(crate) fn start_craft_essence_enhancement_automation(
     coordinator: tauri::State<'_, AutomationCoordinator>,
     debug_state: tauri::State<'_, debug::DebugSidecar>,
     mode: Option<CraftEssenceEnhancementMode>,
+    base_rarity: Option<crate::craft_essence_enhancement_runner::CycleBaseRarity>,
 ) -> Result<(), String> {
     let automation_lease = coordinator.reserve(AutomationKind::CraftEssenceEnhancement)?;
 
@@ -150,7 +151,9 @@ pub(crate) fn start_craft_essence_enhancement_automation(
             Some(debug_sidecar),
             mode,
         );
-        runner.run();
+        runner
+            .with_cycle_base_rarity(base_rarity.unwrap_or_default())
+            .run();
     });
     Ok(())
 }

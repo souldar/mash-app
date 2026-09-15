@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Box, Button, Flex, Text } from "@radix-ui/themes";
+import { Box, Button, Flex, Text, Select } from "@radix-ui/themes";
 import { ChevronLeftIcon } from "@radix-ui/react-icons";
 import { invoke, listen } from "../../tauri";
 import { isAutomationTerminal, type AutomationStatus } from "../../types/automation";
@@ -17,13 +17,14 @@ interface CraftEssenceEnhancementPageProps {
   onLogEntry?: (message: string) => void;
 }
 
-type CraftEssenceEnhancementMode = "qpEfficient" | "fast";
+type CraftEssenceEnhancementMode = "qpEfficient" | "fast" | "cycle";
 
 export function CraftEssenceEnhancementPage({
   onBack,
   onAutomationStart,
   onLogEntry,
 }: CraftEssenceEnhancementPageProps) {
+  const [baseRarity, setBaseRarity] = useState("both");
   const [running, setRunning] = useState(false);
   const [currentScreen, setCurrentScreen] = useState("");
 
@@ -47,12 +48,12 @@ export function CraftEssenceEnhancementPage({
     setCurrentScreen("");
     setRunning(true);
     onAutomationStart?.();
-    invoke("start_craft_essence_enhancement_automation", { mode }).catch((error) => {
+    invoke("start_craft_essence_enhancement_automation", mode === "cycle" ? { mode, baseRarity } : { mode }).catch((error) => {
       const message = `启动失败: ${String(error)}`;
       onLogEntry?.(message);
       setRunning(false);
     });
-  }, [onAutomationStart, onLogEntry]);
+  }, [onAutomationStart, onLogEntry, baseRarity]);
 
   const handleStop = useCallback(() => {
     invoke("stop_craft_essence_enhancement_automation").catch(console.error);
@@ -83,6 +84,18 @@ export function CraftEssenceEnhancementPage({
           </Text>
         </Box>
 
+        <Flex gap="3" align="center">
+          <Text size="2">循环策略底卡</Text>
+          <Select.Root value={baseRarity} onValueChange={setBaseRarity} disabled={running}>
+            <Select.Trigger aria-label="循环策略底卡" />
+            <Select.Content>
+              <Select.Item value="both">一星、二星</Select.Item>
+              <Select.Item value="oneStar">仅一星</Select.Item>
+              <Select.Item value="twoStar">仅二星</Select.Item>
+            </Select.Content>
+          </Select.Root>
+          <Button disabled={running} onClick={() => handleStart("cycle")}>制作丸子（循环策略）</Button>
+        </Flex>
         <Flex gap="3" wrap="wrap" className="battle-controls">
           <Button disabled={running} onClick={() => handleStart("qpEfficient")}>
             制作丸子（节省 QP 策略）
